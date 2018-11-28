@@ -193,7 +193,8 @@ template = """{
   }
 }"""
 
-template2 = """{
+template2 = """"
+        {
   "delimiter": "+",
   "header_0": {
     "before": "TSORDERS"
@@ -296,19 +297,19 @@ for file in fileNames:
                 trailer_idx_value_f = str(template_keys[template_keys.index(input_header) + 1])
                 trailer_idx_value_p = str(template_keys[template_keys.index(input_header) - 1])
 
-                if re.match(".*header_", header_idx_value):
+                if re.match("header_", header_idx_value):
                     header_value = str(template_map[header_idx_value]).split(":")
                     header = get_header_or_trailer(header_value)
                     outputXml += "<" + header + ">" + "\n"
                     is_end = True
 
-                if re.match(".*trailer_", trailer_idx_value_p) and is_end:
+                if re.match("trailer_", trailer_idx_value_p) and is_end:
                     trailer_value_p = str(template_map[trailer_idx_value_p]).split(":")
                     trailer_p = get_header_or_trailer(trailer_value_p)
                     outputXml += "<" + trailer_p + ">" + "\n"
                     is_end = False
 
-                if re.match(".*trailer_", trailer_idx_value_f) and not is_end and template_keys.index(
+                if re.match("trailer_", trailer_idx_value_f) and not is_end and template_keys.index(
                         input_header) != len(template_map) - 2:
                     trailer_value_f = str(template_map[trailer_idx_value_f]).split(":")
                     trailer_f = get_header_or_trailer(trailer_value_f)
@@ -344,7 +345,6 @@ for file in fileNames:
                             outputXml += "<" + rowFields[rowK] + ">" + field[valueIdx] + "</" + rowFields[rowK] + ">\n"
 
             except Exception as e:
-                print(e)
                 is_processed = False
                 number_of_failed_file += 1
                 failed_file = open("C:/Users/Raman/Desktop/parser/failed_files/" + file, "w")

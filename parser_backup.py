@@ -194,75 +194,6 @@ template = """{
   }
 }"""
 
-template2 = """
-        {
-  "delimiter": "+",
-  "header_0": {
-    "before": "TSORDERS"
-  },
-  "unh": {
-    "0": "UNH",
-    "1": "MessageReferenceNumber_01",
-    "subheader_0": "MessageIdentifier_02",
-    "2": "MessageType_01 : MessageVersionNumber_02 : MessageReleaseNumber_03 : ControllingAgencyCoded_04",
-    "subtrailer_0": "/MessageIdentifier_02"
-  },
-  "bgm": {
-    "0": "BGM",
-    "subheader_0": "DOCUMENTMESSAGENAME_01",
-    "1": "Documentmessagenamecoded_01",
-    "subtrailer_0": "/DOCUMENTMESSAGENAME_01",
-    "2": "Documentmessagenumber_02",
-    "3": "Messagefunctioncoded_03"
-  },
-  "dtm": {
-    "0": "DTM",
-    "subheader_0": "DTM",
-    "subheader_1": "DATETIMEPERIOD_01",
-    "1": "Datetimeperiodqualifier_01 : Datetimeperiod_02 : Datetimeperiodformatqualifier_03",
-    "subtrailer_1": "/DATETIMEPERIOD_01",
-    "subtrailer_0": "/DTM"
-  },
-  "pai": {
-    "0": "PAI",
-    "subheader_0": "PAYMENTINSTRUCTIONDETAILS_01",
-    "1": "Paymentmeanscoded_01 : Paymentmeanscoded_02 : Paymentmeanscoded_03",
-    "subtrailer_0": "/PAYMENTINSTRUCTIONDETAILS_01"
-  },
-  "ftx": {
-    "0": "FTX",
-    "subheader_0": "FTX",
-    "1": "Textsubjectqualifier_01",
-    "2": "Textfunctioncoded_02",
-    "subheader_1": "TEXTREFERENCE_03",
-    "3": "Freetextcoded_01 : Freetextcoded_02 : Codelistresponsibleagencycoded_03",
-    "subtrailer_1": "/TEXTREFERENCE_03",
-    "subtrailer_0": "/FTX"
-  },
-  "header_1": {
-    "before": "RFFLoop"
-  },
-  "header_2": {
-    "before": "Loop_RFF_ORDERS"
-  },
-  "ref": {
-    "0": "RFF",
-    "subheader_0": "REFERENCE_01",
-    "1": "Referencequalifier_01 : Referencenumber_02",
-    "subtrailer_0": "/REFERENCE_01"
-  },
-  "trailer_2": {
-    "after": "/Loop_RFF_ORDERS"
-  },
-  "trailer_1": {
-    "after": "/RFFLoop"
-  },
-  "trailer_0": {
-    "after": "/TSORDERS"
-  }
-}"""
-
-
 def get_header_or_trailer(header_trailer):
     return header_trailer[1][:-1].strip().replace("\'", "")
 
@@ -276,7 +207,7 @@ number_of_failed_file = 0
 for file in fileNames:
     outputXml = ""
     fields = []
-    path = "C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/unprocessed_files/"
+    path = "C:/Users/Raman/Desktop/parser/unprocessed_files/"
     after = ""
 
     with open(path + file) as f:
@@ -329,8 +260,9 @@ for file in fileNames:
                                 zip(list(field[int(rowK)].split(ces_delimiter)),
                                     str(rowV).split(ces_delimiter)))
                             for elem in ces_value:
-                                outputXml += "<" + elem[1].strip() + ">" + elem[0] + "</" + elem[
-                                    1].strip() + ">\n"
+                                if elem[1] != " ":
+                                    outputXml += "<" + elem[1].strip() + ">" + elem[0] + "</" + elem[
+                                        1].strip() + ">\n"
                         else:
                             outputXml += "<" + list(rowV)[lenOfPossibleValues] + ">" + field[int(rowK)] \
                                          + "</" + list(rowV)[lenOfPossibleValues] + ">\n"
@@ -346,18 +278,14 @@ for file in fileNames:
                             outputXml += "<" + rowFields[rowK] + ">" + field[valueIdx] + "</" + rowFields[rowK] + ">\n"
 
             except Exception as e:
-                is_processed = False
                 number_of_failed_file += 1
-                failed_file = open("C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/failed_files/" +
-                                   file, "w")
+                failed_file = open("C:/Users/Raman/Desktop/parser/failed_files/" + file, "w")
                 msg = "file unprocessed : {}".format(file)
                 failed_file.write(str(msg))
-                break
+
         outputXml += after
-        if is_processed:
-            output_file = open(
-                "C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/processed_files/" + file.replace(".txt","") + ".xml",
-                "w")
-            output_file.write(outputXml)
+        output_file = open(
+            "C:/Users/Raman/Desktop/parser/processed_files/" + file.replace(".txt", "") + ".xml", "w")
+        output_file.write(outputXml)
         print("file Processed {}".format(file))
 print("number of failed files : {}".format(number_of_failed_file))

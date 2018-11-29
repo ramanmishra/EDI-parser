@@ -1,8 +1,9 @@
-from pymongo import MongoClient
 import json
 import re
 from os import listdir
 from os.path import isfile, join
+
+from pymongo import MongoClient
 
 
 def get_header_or_trailer(header_trailer):
@@ -12,24 +13,29 @@ def get_header_or_trailer(header_trailer):
 def get_template():
     client = MongoClient("localhost", 27017, maxPoolSize=50)
     db = client.makeathon
-    collection = db['templates']
-    cursor = collection.find({"name": "Agent1"})
+    collection = db['template']
+    cursor = collection.find({"name": "HealthCare"})
     for document in cursor:
         file_content = json.dumps(document.get("templates")[0].get("config"), indent=4)
-        delimiter = document.get("delimiter")
-        return (file_content, delimiter)
+        delimiter_db = document.get("delimiter")
+        content_separator = document.get("content_separator")
+        return (file_content, delimiter_db, content_separator)
+
+
+def get_header_or_trailer(header_trailer):
+    return header_trailer[1][:-1].strip().replace("\'", "")
 
 
 mypath = "../unprocessed_files"
 
-template, delimiter = get_template()
 fileNames = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+template, delimiter, content_sep = get_template()
 template_map = json.loads(template)
 number_of_failed_file = 0
 for file in fileNames:
     outputXml = ""
     fields = []
-    path = "C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/unprocessed_files/"
+    path = "C:/Users/Raman/Desktop/parser/unprocessed_files/"
     after = ""
 
     with open(path + file) as f:
@@ -39,7 +45,7 @@ for file in fileNames:
         for line in lines:
             fields += [(line.split(delimiter))]
         nmc = 0
-        ces_delimiter = str(fields[0][-1])
+        ces_delimiter = content_sep
         is_end = True
         for field in fields:
             try:
@@ -82,8 +88,9 @@ for file in fileNames:
                                 zip(list(field[int(rowK)].split(ces_delimiter)),
                                     str(rowV).split(ces_delimiter)))
                             for elem in ces_value:
-                                outputXml += "<" + elem[1].strip() + ">" + elem[0] + "</" + elem[
-                                    1].strip() + ">\n"
+                                if elem[1] != " ":
+                                    outputXml += "<" + elem[1].strip() + ">" + elem[0] + "</" + elem[
+                                        1].strip() + ">\n"
                         else:
                             outputXml += "<" + list(rowV)[lenOfPossibleValues] + ">" + field[int(rowK)] \
                                          + "</" + list(rowV)[lenOfPossibleValues] + ">\n"
@@ -99,18 +106,14 @@ for file in fileNames:
                             outputXml += "<" + rowFields[rowK] + ">" + field[valueIdx] + "</" + rowFields[rowK] + ">\n"
 
             except Exception as e:
-                is_processed = False
                 number_of_failed_file += 1
-                failed_file = open("C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/failed_files/" + file, "w")
+                failed_file = open("C:/Users/Raman/Desktop/parser/failed_files/" + file, "w")
                 msg = "file unprocessed : {}".format(file)
                 failed_file.write(str(msg))
 
         outputXml += after
-        if is_processed:
-            output_file = open(
-                "C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/processed_files/" + file.replace(".txt",
-                                                                                                         "") + ".xml",
-                "w")
-            output_file.write(outputXml)
+        output_file = open(
+            "C:/Users/Raman/Desktop/parser/processed_files/" + file.replace(".txt", "") + ".xml", "w")
+        output_file.write(outputXml)
         print("file Processed {}".format(file))
 print("number of failed files : {}".format(number_of_failed_file))

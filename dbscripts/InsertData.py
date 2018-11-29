@@ -220,7 +220,7 @@ post = {
                    }],
     "delimiter": "*",
     "content_separator": ":",
-    "output-format": "xml"
+    "output_format": ".xml"
 }
 
 post1 = {
@@ -258,7 +258,7 @@ post1 = {
                    }],
     "delimiter": "+",
     "content_separator": ":",
-    "output-format": ".csv"
+    "output_format": ".csv"
 }
 
 db.template.save(post)

@@ -2,7 +2,8 @@ import json
 import re
 from os import listdir
 from os.path import isfile, join
-
+import csv
+from xmlutils.xml2csv import xml2csv
 from pymongo import MongoClient
 
 
@@ -14,28 +15,29 @@ def get_template():
     client = MongoClient("localhost", 27017, maxPoolSize=50)
     db = client.makeathon
     collection = db['template']
-    cursor = collection.find({"name": "HealthCare"})
+    cursor = collection.find({"name": "PurchaseOrder"})
     for document in cursor:
         file_content = json.dumps(document.get("templates")[0].get("config"), indent=4)
         delimiter_db = document.get("delimiter")
         content_separator = document.get("content_separator")
-        return (file_content, delimiter_db, content_separator)
+        output_format = document.get("output_format")
+        return (file_content, delimiter_db, content_separator, output_format)
 
 
 def get_header_or_trailer(header_trailer):
     return header_trailer[1][:-1].strip().replace("\'", "")
 
 
-mypath = "../unprocessed_files"
+mypath = "../unprocessed_files/PurchaseOrder"
 
 fileNames = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-template, delimiter, content_sep = get_template()
+template, delimiter, content_sep, format_output = get_template()
 template_map = json.loads(template)
 number_of_failed_file = 0
 for file in fileNames:
     outputXml = ""
     fields = []
-    path = "C:/Users/Raman/Desktop/parser/unprocessed_files/"
+    path = "C:/Users/Raman/Desktop/parser/unprocessed_files/PurchaseOrder/"
     after = ""
 
     with open(path + file) as f:
@@ -106,14 +108,17 @@ for file in fileNames:
                             outputXml += "<" + rowFields[rowK] + ">" + field[valueIdx] + "</" + rowFields[rowK] + ">\n"
 
             except Exception as e:
-                number_of_failed_file += 1
                 failed_file = open("C:/Users/Raman/Desktop/parser/failed_files/" + file, "w")
                 msg = "file unprocessed : {}".format(file)
                 failed_file.write(str(msg))
 
         outputXml += after
         output_file = open(
-            "C:/Users/Raman/Desktop/parser/processed_files/" + file.replace(".txt", "") + ".xml", "w")
+            "C:/Users/Raman/Desktop/parser/processed_files/PurchaseOrder/" + file.replace(".txt", "") + ".xml", "w")
         output_file.write(outputXml)
+        print(output_file.name)
+        convertor = xml2csv(output_file.name, "xyz.csv", )
+        convertor.convert(tag="item")
+
         print("file Processed {}".format(file))
 print("number of failed files : {}".format(number_of_failed_file))

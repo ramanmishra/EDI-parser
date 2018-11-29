@@ -1,16 +1,18 @@
-from flask import Flask
+from flask import Flask, request, render_template, url_for, redirect
 import json
 
 app = Flask(__name__)
 
 
-@app.route('/test/test_josn/<jsonString>', methods=['POST'])
-def test_json(jsonString):
+@app.route('/test/', methods=['POST', 'GET'])
+def test():
+    data = request.data
+
     try:
-        json.loads(jsonString)
-        return True
-    except Exception as ex:
-        return ex
+        json.loads(data)
+        return "JsonString validated successfully"
+    except Exception as e:
+        return "Error Encountered: {}".format(e)
+
 
 app.run()
-

@@ -1,6 +1,3 @@
-# DB connection
-# read tamplate
-
 from pymongo import MongoClient
 import json
 import re
@@ -8,57 +5,26 @@ from os import listdir
 from os.path import isfile, join
 
 
-template = """{
-  "header_0": {"before" : "0"},
-  "bgm": {
-    "2": "PO_NUMBER"
-  },
-  "dtm": {
-    "1": " : PO_DATE : "
-  },
-  "header_1":  {"before" : "1"},
-  "nad": {
-    "2": "CUSTOMER_NUMBER : : ",
-    "4": "CUSTOMER_NAME",
-    "5": "ADDRESS",
-    "6": "CITY",
-    "7": "STATE",
-    "8": "POSTAL_CODE"
-  },
-  "header_2": {"before" : "2"},
-  "lin": {
-    "1": "LINE_NUMBER",
-    "3": "UPC_NUMBER"
-  },
-  "qty": {
-    "1": " : QUANTITY : UOM"
-  },
-  "pri": {
-    "1": " : PRICE"
-  },
-  "trailer_2": {"after":"/2"},
-  "trailer_1": {"after":"/1"},
-  "trailer_0": {"after":"/0"}
-}"""
-
 def get_header_or_trailer(header_trailer):
     return header_trailer[1][:-1].strip().replace("\'", "")
 
 
-def select_record():
+def get_template():
     client = MongoClient("localhost", 27017, maxPoolSize=50)
     db = client.makeathon
     collection = db['templates']
-    cursor = collection.find({"name": "Agent1"}, {'_id': False})
+    cursor = collection.find({"name": "Agent1"})
     for document in cursor:
-        print(document)
+        file_content = json.dumps(document.get("templates")[0].get("config"), indent=4)
+        delimiter = document.get("delimiter")
+        return (file_content, delimiter)
 
 
-mypath = "./unprocessed_files"
+mypath = "../unprocessed_files"
 
+template, delimiter = get_template()
 fileNames = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 template_map = json.loads(template)
-delimiter = "+"
 number_of_failed_file = 0
 for file in fileNames:
     outputXml = ""
@@ -73,10 +39,9 @@ for file in fileNames:
         for line in lines:
             fields += [(line.split(delimiter))]
         nmc = 0
-        ces_delimiter = str(":")
+        ces_delimiter = str(fields[0][-1])
         is_end = True
         for field in fields:
-            print(field)
             try:
                 input_header = str(field[0]).lower()
                 template_value = template_map[input_header]
@@ -116,11 +81,9 @@ for file in fileNames:
                             ces_value = list(
                                 zip(list(field[int(rowK)].split(ces_delimiter)),
                                     str(rowV).split(ces_delimiter)))
-                            print(ces_value)
                             for elem in ces_value:
-                                if elem[1]!=" ":
-                                    outputXml += "<" + elem[1].strip() + ">" + elem[0] + "</" + elem[
-                                        1].strip() + ">\n"
+                                outputXml += "<" + elem[1].strip() + ">" + elem[0] + "</" + elem[
+                                    1].strip() + ">\n"
                         else:
                             outputXml += "<" + list(rowV)[lenOfPossibleValues] + ">" + field[int(rowK)] \
                                          + "</" + list(rowV)[lenOfPossibleValues] + ">\n"
@@ -136,14 +99,18 @@ for file in fileNames:
                             outputXml += "<" + rowFields[rowK] + ">" + field[valueIdx] + "</" + rowFields[rowK] + ">\n"
 
             except Exception as e:
-                print(e)
+                is_processed = False
+                number_of_failed_file += 1
+                failed_file = open("C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/failed_files/" + file, "w")
+                msg = "file unprocessed : {}".format(file)
+                failed_file.write(str(msg))
 
         outputXml += after
-        output_file = open(
-            "C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/processed_files/" + file.replace(".txt",
-                                                                                                     "") + ".xml",
-            "w")
-        print(outputXml)
-        output_file.write(outputXml)
+        if is_processed:
+            output_file = open(
+                "C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/processed_files/" + file.replace(".txt",
+                                                                                                         "") + ".xml",
+                "w")
+            output_file.write(outputXml)
         print("file Processed {}".format(file))
 print("number of failed files : {}".format(number_of_failed_file))

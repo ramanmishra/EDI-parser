@@ -125,7 +125,6 @@ def start_parser():
                     is_processed = False
                     failed_file = open("C:/Users/raman.mishra/Desktop/parserBackend/EDI-parser/failed_files/" + file,
                                        "w")
-                    print(e)
                     msg = "file unprocessed : {}".format(file)
                     failed_file.write(str(msg))
 
